@@ -14,11 +14,11 @@ const PORT = process.env.PORT || 3408;
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL,
-    "http://44.223.23.14:8029",
-    "http://44.223.23.14:3408",
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://44.223.23.14:8030",
+    "http://16.171.153.199:8029",
+    "http://16.171.153.199:3408",
+    "http://16.171.153.199:5500",
+    "http://16.171.153.199:5500",
+    "http://16.171.153.199:8030",
     "http://employee-frontend:80",
     "http://hr-frontend:80"
   ],
@@ -42,10 +42,10 @@ const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'postgres-db',
   database: process.env.DB_NAME || 'onboarding',
-  password: process.env.DB_PASSWORD || 'admin123',
+  password: process.env.DB_PASSWORD || 'admin234',
   port: process.env.DB_PORT || 5432,
   max: 20,
-  idleTimeoutMillis: 30000,
+  idleTimeoutMillis: 3815,
   connectionTimeoutMillis: 5000,
 });
 
