@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const { Pool } = require("pg"); // Changed from Client to Pool
+const { Pool } = require("pg");
 const cors = require("cors");
 const fs = require("fs");
 const mime = require('mime-types');
@@ -29,11 +29,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // File upload setup
-const uploadDir = path.join(__dirname, "uploads");
+const uploadDir = path.join(__dirname, "Uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadDir));
+app.use('/Uploads', express.static(uploadDir));
 
 // PostgreSQL Pool Configuration
 const pool = new Pool({
@@ -42,9 +42,9 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'onboarding',
   password: process.env.DB_PASSWORD || 'admin123',
   port: process.env.DB_PORT || 5432,
-  max: 20, // maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 5000, // how long to try connecting before timing out
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 // Error handling for the pool
@@ -57,7 +57,6 @@ pool.on('error', (err) => {
 const connectToDatabase = async () => {
   let client;
   try {
-    // Test the connection
     client = await pool.connect();
     console.log("Connected to PostgreSQL");
 
@@ -71,6 +70,8 @@ const connectToDatabase = async () => {
         emp_marital_status VARCHAR(20),
         emp_dob DATE,
         emp_mobile VARCHAR(20),
+        emp_aadhaar VARCHAR(50),
+        emp_pan VARCHAR(50),
         emp_address TEXT,
         emp_city VARCHAR(100),
         emp_state VARCHAR(100),
@@ -151,6 +152,16 @@ const connectToDatabase = async () => {
         BEGIN
           ALTER TABLE ajay_table ADD COLUMN IF NOT EXISTS emp_mobile VARCHAR(20);
         EXCEPTION WHEN duplicate_column THEN RAISE NOTICE 'column emp_mobile already exists';
+        END;
+
+        BEGIN
+          ALTER TABLE ajay_table ADD COLUMN IF NOT EXISTS emp_aadhaar VARCHAR(50);
+        EXCEPTION WHEN duplicate_column THEN RAISE NOTICE 'column emp_aadhaar already exists';
+        END;
+
+        BEGIN
+          ALTER TABLE ajay_table ADD COLUMN IF NOT EXISTS emp_pan VARCHAR(50);
+        EXCEPTION WHEN duplicate_column THEN RAISE NOTICE 'column emp_pan already exists';
         END;
 
         BEGIN
@@ -409,7 +420,7 @@ const upload = multer({
     }
     cb(null, true);
   },
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 // File Cleanup
@@ -456,13 +467,15 @@ app.post("/save-employee", upload.fields([
     const result = await client.query(`
       INSERT INTO ajay_table (
         emp_name, emp_email, emp_gender, emp_marital_status, emp_dob, emp_mobile,
-        emp_address, emp_city, emp_state, emp_zipcode, emp_bank, emp_account,
-        emp_ifsc, emp_bank_branch, emp_job_role, emp_department, emp_experience_status,
-        emp_company_name, emp_years_of_experience, emp_joining_date, emp_profile_pic,
-        emp_salary_slip, emp_offer_letter, emp_relieving_letter, emp_experience_certificate,
-        emp_ssc_doc, ssc_school, ssc_year, ssc_grade, emp_inter_doc, inter_college,
-        inter_year, inter_grade, inter_branch, emp_grad_doc, grad_college, grad_year,
-        grad_grade, grad_degree, grad_branch, resume, id_proof, signed_document,
+        emp_aadhaar, emp_pan, emp_address, emp_city, emp_state, emp_zipcode,
+        emp_bank, emp_account, emp_ifsc, emp_bank_branch, emp_job_role,
+        emp_department, emp_experience_status, emp_company_name,
+        emp_years_of_experience, emp_joining_date, emp_profile_pic,
+        emp_salary_slip, emp_offer_letter, emp_relieving_letter,
+        emp_experience_certificate, emp_ssc_doc, ssc_school, ssc_year,
+        ssc_grade, emp_inter_doc, inter_college, inter_year, inter_grade,
+        inter_branch, emp_grad_doc, grad_college, grad_year, grad_grade,
+        grad_degree, grad_branch, resume, id_proof, signed_document,
         primary_contact_name, primary_contact_relationship, primary_contact_phone,
         primary_contact_email, uan_number, pf_number, emp_terms_accepted
       ) VALUES (
@@ -470,7 +483,8 @@ app.post("/save-employee", upload.fields([
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
         $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
         $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
-        $41, $42, $43, $44, $45, $46, $47, $48, $49, $50
+        $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
+        $51, $52
       )
       RETURNING id
     `, [
@@ -480,6 +494,8 @@ app.post("/save-employee", upload.fields([
       req.body.emp_marital_status || null,
       req.body.emp_dob || null,
       req.body.emp_mobile || null,
+      req.body.emp_aadhaar || null,
+      req.body.emp_pan || null,
       req.body.emp_address || null,
       req.body.emp_city || null,
       req.body.emp_state || null,
@@ -556,7 +572,7 @@ app.get("/employees", async (req, res) => {
 
       documentFields.forEach(field => {
         if (employeeData[field]) {
-          employeeData[`${field}_url`] = `${req.protocol}://${req.get('host')}/uploads/${employeeData[field]}`;
+          employeeData[`${field}_url`] = `${req.protocol}://${req.get('host')}/Uploads/${employeeData[field]}`;
         }
       });
 
@@ -595,7 +611,7 @@ app.get("/employees/:id", async (req, res) => {
 
     documentFields.forEach(field => {
       if (employeeData[field]) {
-        employeeData[`${field}_url`] = `${req.protocol}://${req.get('host')}/uploads/${employeeData[field]}`;
+        employeeData[`${field}_url`] = `${req.protocol}://${req.get('host')}/Uploads/${employeeData[field]}`;
       }
     });
 
@@ -648,7 +664,7 @@ app.post("/get-documents", async (req, res) => {
         const filePath = path.join(uploadDir, employee[field]);
         if (fs.existsSync(filePath)) {
           documents[field] = {
-            url: `${req.protocol}://${req.get('host')}/uploads/${employee[field]}`,
+            url: `${req.protocol}://${req.get('host')}/Uploads/${employee[field]}`,
             name: name,
             filename: employee[field]
           };
@@ -709,4 +725,3 @@ process.on('SIGINT', async () => {
   await pool.end();
   process.exit(0);
 });
-

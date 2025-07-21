@@ -18,8 +18,7 @@
         
         * {
             box-sizing: border-box;
-            /* font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
-            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
         
         body {
@@ -472,7 +471,7 @@ input[type="number"]::-webkit-inner-spin-button {
                         <label for="emp_pan" class="required">PAN Card Number</label>
                         <div class="form-group">
                             <input type="text" id="emp_pan" name="emp_pan" placeholder="PAN Card Number" required minlength="10" maxlength="10">
-                            <div id="emp_pan-error" class="validation-message">PAN must be exactly 10 alphanumeric characters (e.g., ABCDE1234F)</div>
+                            <div id="emp_pan-error" class="validation-message">PAN must be 10 alphanumeric characters (e.g., ABCDE1234F)</div>
                         </div>
                     </div>
                 </div>
@@ -952,22 +951,18 @@ input[type="number"]::-webkit-inner-spin-button {
             const uanRegex = /^[1-9]\d{11}$/;
             const pfRegex = /^[A-Z]{2}\/[A-Z]{3}\/\d{7}$/i;
             
-           // Get current date in IST (India Standard Time)
-    const now = new Date();
-    const indiaOffset = 330; // IST is UTC+5:30 (330 minutes)
-    const indiaNow = new Date(now.getTime() + (indiaOffset - now.getTimezoneOffset()) * 60000);
-    
-    // Set joining date range (today to 6 months in future)
-    const joiningDateInput = document.getElementById('emp_joining_date');
-    const sixMonthsLater = new Date(indiaNow);
-    sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
-    
-    joiningDateInput.min = formatDateForInput(indiaNow);
-    joiningDateInput.max = formatDateForInput(sixMonthsLater);
-    // Add input event listener for real-time validation of manual entry
-    joiningDateInput.addEventListener('input', function() {
-        validateJoiningDate();
-    });
+            // Get current date in IST (India Standard Time)
+            const now = new Date();
+            const indiaOffset = 330; // IST is UTC+5:30 (330 minutes)
+            const indiaNow = new Date(now.getTime() + (indiaOffset - now.getTimezoneOffset()) * 60000);
+            
+            // Set joining date range (today to 6 months in future)
+            const joiningDateInput = document.getElementById('emp_joining_date');
+            const sixMonthsLater = new Date(indiaNow);
+            sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+            
+            joiningDateInput.min = formatDateForInput(indiaNow);
+            joiningDateInput.max = formatDateForInput(sixMonthsLater);
             // Removed: joiningDateInput.value = formatDateForInput(indiaNow);
             
             // Set DOB range (20-60 years)
@@ -1140,7 +1135,6 @@ input[type="number"]::-webkit-inner-spin-button {
                     case 'emp_mobile': return validateMobile();
                     case 'emp_alt_mobile': return validateAltMobile();
                     case 'emp_aadhaar': return validateAadhaar();
-                    case 'emp_pan': return validatePAN();
                     case 'emp_address': return validateAddress();
                     case 'emp_city': return validateCity();
                     case 'emp_state': return validateState();
@@ -1613,8 +1607,7 @@ function validateEmail() {
                 return true;
             }
 
-            function validatePAN() {
-                const input = document.getElementById('emp_pan');
+            function validatePAN(input) {
                 const error = document.getElementById('emp_pan-error');
                 let value = cleanInput(input).toUpperCase().replace(/[^A-Z0-9]/g, '');
                 
@@ -1625,11 +1618,6 @@ function validateEmail() {
                 
                 if (!value) {
                     showError(input, error, 'PAN number is required');
-                    return false;
-                }
-                
-                if (value.length !== 10) {
-                    showError(input, error, 'PAN must be exactly 10 alphanumeric characters (e.g., ABCDE1234F)');
                     return false;
                 }
                 
@@ -2005,53 +1993,28 @@ function validatePF() {
     showSuccess(pf, error);
     return true;
 }
-        // Updated validateJoiningDate function
-    function validateJoiningDate() {
-        const joiningDate = document.getElementById('emp_joining_date');
-        const error = document.getElementById('joining-error');
-        
-        if (!joiningDate.value) {
-            showError(joiningDate, error, 'Joining date is required');
-            return false;
-        }
-        
-        const joinDate = new Date(joiningDate.value);
-        const today = new Date(indiaNow);
-        today.setHours(0, 0, 0, 0);
-        const maxDate = new Date(sixMonthsLater);
-        maxDate.setHours(0, 0, 0, 0);
-        
-        // Check if the date is valid
-        if (isNaN(joinDate.getTime())) {
-            showError(joiningDate, error, 'Please enter a valid date');
-            return false;
-        }
-        
-        // Check if the date is within the allowed range
-        if (joinDate < today) {
-            showError(joiningDate, error, 'Joining date cannot be in the past');
-            return false;
-        }
-        
-        if (joinDate > maxDate) {
-            const maxDateStr = `${maxDate.getFullYear()}-${(maxDate.getMonth() + 1).toString().padStart(2, '0')}-${maxDate.getDate().toString().padStart(2, '0')}`;
-            showError(joiningDate, error, `Joining date must be on or before ${maxDateStr}`);
-            return false;
-        }
-        
-        // Explicitly check the year for manual input
-        const joinYear = joinDate.getFullYear();
-        const currentYear = today.getFullYear();
-        const maxYear = maxDate.getFullYear();
-        
-        if (joinYear < currentYear || joinYear > maxYear) {
-            showError(joiningDate, error, `Year must be between ${currentYear} and ${maxYear}`);
-            return false;
-        }
-        
-        showSuccess(joiningDate, error);
-        return true;
+           function validateJoiningDate() {
+    const joiningDate = document.getElementById('emp_joining_date');
+    const error = document.getElementById('joining-error');
+    
+    if (!joiningDate.value) {
+        showError(joiningDate, error, 'Joining date is required');
+        return false;
     }
+    
+    const joinDate = new Date(joiningDate.value);
+    const today = new Date(indiaNow);
+    today.setHours(0, 0, 0, 0);
+    
+    // Allow today and future dates
+    if (joinDate < today) {
+        showError(joiningDate, error, 'Joining date cannot be in the past');
+        return false;
+    }
+    
+    showSuccess(joiningDate, error);
+    return true;
+}
         
             function validateSSCSchool() {
                 const school = document.getElementById('ssc_school');
